@@ -77,7 +77,7 @@ cache:
 notifications:
     irc:
         channels:
-            - "irc.freenode.org#n0n3m"
+            - "irc.freenode.org#beets"
         use_notice: true
         skip_join: true
         on_success: change
