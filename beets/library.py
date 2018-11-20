@@ -1030,6 +1030,12 @@ class Album(LibModel):
         if not old_art:
             return
 
+        if not os.path.exists(old_art):
+            log.error(u'removing reference to missing album art file {}',
+                      util.displayable_path(old_art))
+            self.artpath = None
+            return
+
         new_art = self.art_destination(old_art)
         if new_art == old_art:
             return
@@ -1506,9 +1512,16 @@ class DefaultTemplateFunctions(object):
         # Fast paths: no album, no item or library, or memoized value.
         if not self.item or not self.lib:
             return u''
-        if self.item.album_id is None:
+
+        if isinstance(self.item, Item):
+            album_id = self.item.album_id
+        elif isinstance(self.item, Album):
+            album_id = self.item.id
+
+        if album_id is None:
             return u''
-        memokey = ('aunique', keys, disam, self.item.album_id)
+
+        memokey = ('aunique', keys, disam, album_id)
         memoval = self.lib._memotable.get(memokey)
         if memoval is not None:
             return memoval
@@ -1528,7 +1541,7 @@ class DefaultTemplateFunctions(object):
             bracket_l = u''
             bracket_r = u''
 
-        album = self.lib.get_album(self.item)
+        album = self.lib.get_album(album_id)
         if not album:
             # Do nothing for singletons.
             self.lib._memotable[memokey] = u''

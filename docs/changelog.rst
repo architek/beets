@@ -42,6 +42,10 @@ New features:
 * The ``albumdisambig`` field no longer includes the MusicBrainz release group
   disambiguation comment. A new ``releasegroupdisambig`` field has been added.
   :bug:`3024`
+* The :ref:`modify-cmd` command now allows resetting fixed attributes. For
+  example, ``beet modify -a artist:beatles artpath!`` resets ``artpath``
+  attribute from matching albums back to the default value.
+  :bug:`2497`
 
 Changes:
 
@@ -86,6 +90,20 @@ Fixes:
 * Fix a problem when resizing images with PIL/Pillow on Python 3.
   Thanks to :user:`architek`.
   :bug:`2504` :bug:`3029`
+* Avoid a crash when archive extraction fails during import.
+  :bug:`3041`
+* The ``%aunique`` template function now works correctly with the
+  ``-f/--format`` option.
+  :bug:`3043`
+* Missing album art file during an update no longer causes a fatal exception
+  (instead, an error is logged and the missing file path is removed from the
+  library). :bug:`3030`
+* Fixed the ordering of items when manually selecting changes while updating
+  tags
+  Thanks to :user:`TaizoSimpson`.
+  :bug:`3501`
+* Confusing typo when the convert plugin copies the art covers. :bug:`3063`
+
 
 .. _python-itunes: https://github.com/ocelma/python-itunes
 
@@ -1454,7 +1472,7 @@ And many little fixes and improvements:
 * The error message when MusicBrainz is not reachable on the network is now
   much clearer. Thanks to Tom Jaspers. :bug:`1190` :bug:`1272`
 * Improve error messages when parsing query strings with shlex. :bug:`1290`
-* :doc:`/plugins/embedart`: Fix a crash that occured when used together
+* :doc:`/plugins/embedart`: Fix a crash that occurred when used together
   with the *check* plugin. :bug:`1241`
 * :doc:`/plugins/scrub`: Log an error instead of stopping when the ``beet
   scrub`` command cannot write a file. Also, avoid problems on Windows with
