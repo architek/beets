@@ -408,9 +408,14 @@ def input_select_objects(prompt, objs, rep):
         out = []
         for obj in objs:
             rep(obj)
-            if input_yn(u'%s? (yes/no)' % prompt, True):
+            answer = input_options(
+                ('y', 'n', 'q'), True, u'%s? (yes/no/quit)' % prompt,
+                u'Enter Y or N:'
+            )
+            if answer == u'y':
                 out.append(obj)
-            print()  # go to a new line
+            elif answer == u'q':
+                return out
         return out
 
     else:  # No.
@@ -1138,8 +1143,12 @@ def _setup(options, lib=None):
     if lib is None:
         lib = _open_library(config)
         plugins.send("library_opened", lib=lib)
+
+    # Add types and queries defined by plugins.
     library.Item._types.update(plugins.types(library.Item))
     library.Album._types.update(plugins.types(library.Album))
+    library.Item._queries.update(plugins.named_queries(library.Item))
+    library.Album._queries.update(plugins.named_queries(library.Album))
 
     return subcommands, plugins, lib
 
