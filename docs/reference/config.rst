@@ -508,9 +508,10 @@ incremental_skip_later
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Either ``yes`` or ``no``, controlling whether skipped directories are
-recorded in the incremental list. Set this option to ``yes`` if you would
-like to revisit skipped directories later whilst using incremental
-mode. Defaults to ``no``.
+recorded in the incremental list. When set to ``yes``, skipped directories
+will be recorded, and skipped later. When set to ``no``, skipped
+directories won't be recorded, and beets will try to import them again
+later. Defaults to ``no``.
 
 .. _from_scratch:
 
@@ -571,9 +572,11 @@ languages
 ~~~~~~~~~
 
 A list of locale names to search for preferred aliases. For example, setting
-this to "en" uses the transliterated artist name "Pyotr Ilyich Tchaikovsky"
+this to ``en`` uses the transliterated artist name "Pyotr Ilyich Tchaikovsky"
 instead of the Cyrillic script for the composer's name when tagging from
-MusicBrainz. Defaults to an empty list, meaning that no language is preferred.
+MusicBrainz. You can use a space-separated list of language abbreviations, like 
+``en jp es``, to specify a preference order. Defaults to an empty list, meaning 
+that no language is preferred.
 
 .. _detail:
 
