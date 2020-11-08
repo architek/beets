@@ -36,12 +36,13 @@ from beets import logging
 from beets import library
 from beets import plugins
 from beets import util
-from beets.util.functemplate import Template
+from beets.util.functemplate import template
 from beets import config
-from beets.util import confit, as_string
+from beets.util import as_string
 from beets.autotag import mb
 from beets.dbcore import query as db_query
 from beets.dbcore import db
+import confuse
 import six
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
@@ -203,7 +204,7 @@ def input_(prompt=None):
     """
     # raw_input incorrectly sends prompts to stderr, not stdout, so we
     # use print_() explicitly to display prompts.
-    # http://bugs.python.org/issue1927
+    # https://bugs.python.org/issue1927
     if prompt:
         print_(prompt, end=u' ')
 
@@ -388,17 +389,19 @@ def input_yn(prompt, require=False):
     return sel == u'y'
 
 
-def input_select_objects(prompt, objs, rep):
+def input_select_objects(prompt, objs, rep, prompt_all=None):
     """Prompt to user to choose all, none, or some of the given objects.
     Return the list of selected objects.
 
     `prompt` is the prompt string to use for each question (it should be
-    phrased as an imperative verb). `rep` is a function to call on each
-    object to print it out when confirming objects individually.
+    phrased as an imperative verb). If `prompt_all` is given, it is used
+    instead of `prompt` for the first (yes(/no/select) question.
+    `rep` is a function to call on each object to print it out when confirming
+    objects individually.
     """
     choice = input_options(
         (u'y', u'n', u's'), False,
-        u'%s? (Yes/no/select)' % prompt)
+        u'%s? (Yes/no/select)' % (prompt_all or prompt))
     print()  # Blank line.
 
     if choice == u'y':  # Yes.
@@ -474,7 +477,7 @@ def human_seconds_short(interval):
 # Colorization.
 
 # ANSI terminal colorization code heavily inspired by pygments:
-# http://dev.pocoo.org/hg/pygments-main/file/b2deea5b5030/pygments/console.py
+# https://bitbucket.org/birkenfeld/pygments-main/src/default/pygments/console.py
 # (pygments is by Tim Hatch, Armin Ronacher, et al.)
 COLOR_ESCAPE = "\x1b["
 DARK_COLORS = {
@@ -529,21 +532,21 @@ def colorize(color_name, text):
     """Colorize text if colored output is enabled. (Like _colorize but
     conditional.)
     """
-    if config['ui']['color']:
-        global COLORS
-        if not COLORS:
-            COLORS = dict((name,
-                           config['ui']['colors'][name].as_str())
-                          for name in COLOR_NAMES)
-        # In case a 3rd party plugin is still passing the actual color ('red')
-        # instead of the abstract color name ('text_error')
-        color = COLORS.get(color_name)
-        if not color:
-            log.debug(u'Invalid color_name: {0}', color_name)
-            color = color_name
-        return _colorize(color, text)
-    else:
+    if not config['ui']['color'] or 'NO_COLOR' in os.environ.keys():
         return text
+
+    global COLORS
+    if not COLORS:
+        COLORS = dict((name,
+                       config['ui']['colors'][name].as_str())
+                      for name in COLOR_NAMES)
+    # In case a 3rd party plugin is still passing the actual color ('red')
+    # instead of the abstract color name ('text_error')
+    color = COLORS.get(color_name)
+    if not color:
+        log.debug(u'Invalid color_name: {0}', color_name)
+        color = color_name
+    return _colorize(color, text)
 
 
 def _colordiff(a, b, highlight='text_highlight',
@@ -616,12 +619,12 @@ def get_path_formats(subview=None):
     subview = subview or config['paths']
     for query, view in subview.items():
         query = PF_KEY_QUERIES.get(query, query)  # Expand common queries.
-        path_formats.append((query, Template(view.as_str())))
+        path_formats.append((query, template(view.as_str())))
     return path_formats
 
 
 def get_replacements():
-    """Confit validation function that reads regex/string pairs.
+    """Confuse validation function that reads regex/string pairs.
     """
     replacements = []
     for pattern, repl in config['replace'].get(dict).items():
@@ -928,7 +931,7 @@ class CommonOptionsParser(optparse.OptionParser, object):
 #
 # This is a fairly generic subcommand parser for optparse. It is
 # maintained externally here:
-# http://gist.github.com/462717
+# https://gist.github.com/462717
 # There you will also find a better description of the code and a more
 # succinct example program.
 
@@ -1099,8 +1102,8 @@ optparse.Option.ALWAYS_TYPED_ACTIONS += ('callback',)
 
 # The main entry point and bootstrapping.
 
-def _load_plugins(config):
-    """Load the plugins specified in the configuration.
+def _load_plugins(options, config):
+    """Load the plugins specified on the command line or in the configuration.
     """
     paths = config['pluginpath'].as_str_seq(split=False)
     paths = [util.normpath(p) for p in paths]
@@ -1111,13 +1114,20 @@ def _load_plugins(config):
 
     # Extend the `beetsplug` package to include the plugin paths.
     import beetsplug
-    beetsplug.__path__ = paths + beetsplug.__path__
+    beetsplug.__path__ = paths + list(beetsplug.__path__)
 
     # For backwards compatibility, also support plugin paths that
     # *contain* a `beetsplug` package.
     sys.path += paths
 
-    plugins.load_plugins(config['plugins'].as_str_seq())
+    # If we were given any plugins on the command line, use those.
+    if options.plugins is not None:
+        plugin_list = (options.plugins.split(',')
+                       if len(options.plugins) > 0 else [])
+    else:
+        plugin_list = config['plugins'].as_str_seq()
+
+    plugins.load_plugins(plugin_list)
     plugins.send("pluginload")
     return plugins
 
@@ -1132,7 +1142,7 @@ def _setup(options, lib=None):
 
     config = _configure(options)
 
-    plugins = _load_plugins(config)
+    plugins = _load_plugins(options, config)
 
     # Get the default subcommands.
     from beets.ui.commands import default_commands
@@ -1230,6 +1240,8 @@ def _raw_main(args, lib=None):
                       help=u'log more details (use twice for even more)')
     parser.add_option('-c', '--config', dest='config',
                       help=u'path to configuration file')
+    parser.add_option('-p', '--plugins', dest='plugins',
+                      help=u'a comma-separated list of plugins to load')
     parser.add_option('-h', '--help', dest='help', action='store_true',
                       help=u'show this help message and exit')
     parser.add_option('--version', dest='version', action='store_true',
@@ -1277,7 +1289,7 @@ def main(args=None):
         log.debug('{}', traceback.format_exc())
         log.error('{}', exc)
         sys.exit(1)
-    except confit.ConfigError as exc:
+    except confuse.ConfigError as exc:
         log.error(u'configuration error: {0}', exc)
         sys.exit(1)
     except db_query.InvalidQueryError as exc:

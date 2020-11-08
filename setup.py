@@ -56,15 +56,16 @@ if 'sdist' in sys.argv:
 
 setup(
     name='beets',
-    version='1.4.8',
+    version='1.5.0',
     description='music tagger and library organizer',
     author='Adrian Sampson',
     author_email='adrian@radbox.org',
-    url='http://beets.io/',
+    url='https://beets.io/',
     license='MIT',
     platforms='ALL',
     long_description=_read('README.rst'),
     test_suite='test.testall.suite',
+    zip_safe=False,
     include_package_data=True,  # Install plugin resources.
 
     packages=[
@@ -87,10 +88,11 @@ setup(
 
     install_requires=[
         'six>=1.9',
-        'mutagen>=1.33',
         'unidecode',
         'musicbrainzngs>=0.4',
         'pyyaml',
+        'mediafile>=0.2.0',
+        'confuse>=1.0.0',
     ] + [
         # Avoid a version of munkres incompatible with Python 3.
         'munkres~=1.0.0' if sys.version_info < (3, 5, 0) else
@@ -107,21 +109,35 @@ setup(
         ['colorama'] if (sys.platform == 'win32') else []
     ),
 
-    tests_require=[
-        'beautifulsoup4',
-        'flask',
-        'mock',
-        'pylast',
-        'rarfile',
-        'responses',
-        'pyxdg',
-        'pathlib',
-        'python-mpd2',
-        'discogs-client'
-    ],
-
-    # Plugin (optional) dependencies:
     extras_require={
+        'test': [
+            'beautifulsoup4',
+            'coverage',
+            'discogs-client',
+            'flask',
+            'mock',
+            'pylast',
+            'pytest',
+            'python-mpd2',
+            'pyxdg',
+            'responses>=0.3.0',
+            'requests_oauthlib',
+        ] + (
+            # Tests for the thumbnails plugin need pathlib on Python 2 too.
+            ['pathlib'] if (sys.version_info < (3, 4, 0)) else []
+        ) + [
+            'rarfile<4' if sys.version_info < (3, 6, 0) else 'rarfile',
+        ],
+        'lint': [
+            'flake8',
+            'flake8-blind-except',
+            'flake8-coding',
+            'flake8-docstrings',
+            'flake8-future-import',
+            'pep8-naming',
+        ],
+
+        # Plugin (optional) dependencies:
         'absubmit': ['requests'],
         'fetchart': ['requests', 'Pillow'],
         'embedart': ['Pillow'],
@@ -137,11 +153,14 @@ setup(
         'mpdstats': ['python-mpd2>=0.4.2'],
         'plexupdate': ['requests'],
         'web': ['flask', 'flask-cors'],
-        'import': ['rarfile'],
+        'import': (
+            ['rarfile<4' if (sys.version_info < (3, 6, 0)) else 'rarfile']
+        ),
         'thumbnails': ['pyxdg', 'Pillow'] +
         (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
         'metasync': ['dbus-python'],
         'sonosupdate': ['soco'],
+        'scrub': ['mutagen>=1.33'],
         'bpd': ['PyGObject'],
         'replaygain': ['PyGObject'],
     },
@@ -151,7 +170,7 @@ setup(
     #   badfiles: mp3val and flac
     #   bpd: python-gi and GStreamer 1.0+
     #   embedart: ImageMagick
-    #   absubmit: extractor binary from http://acousticbrainz.org/download
+    #   absubmit: extractor binary from https://acousticbrainz.org/download
     #   keyfinder: KeyFinder
     #   replaygain: python-gi and GStreamer 1.0+ or mp3gain/aacgain
     #               or Python Audio Tools
@@ -167,7 +186,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',

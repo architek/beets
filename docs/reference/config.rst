@@ -31,7 +31,7 @@ In YAML, you will need to use spaces (not tabs!) to indent some lines. If you
 have questions about more sophisticated syntax, take a look at the `YAML`_
 documentation.
 
-.. _YAML: http://yaml.org/
+.. _YAML: https://yaml.org/
 
 The rest of this page enumerates the dizzying litany of configuration options
 available in beets. You might also want to see an
@@ -167,7 +167,7 @@ equivalent to wrapping all your path templates in the ``%asciify{}``
 
 Default: ``no``.
 
-.. _unidecode module: http://pypi.python.org/pypi/Unidecode
+.. _unidecode module: https://pypi.org/project/Unidecode
 
 
 .. _art-filename:
@@ -314,7 +314,7 @@ standard output. It's also used to read messages from the standard input.
 By default, this is determined automatically from the locale
 environment variables.
 
-.. _known to python: http://docs.python.org/2/library/codecs.html#standard-encodings
+.. _known to python: https://docs.python.org/2/library/codecs.html#standard-encodings
 
 .. _clutter:
 
@@ -355,7 +355,6 @@ va_name
 Sets the albumartist for various-artist compilations. Defaults to ``'Various
 Artists'`` (the MusicBrainz standard). Affects other sources, such as
 :doc:`/plugins/discogs`, too.
-
 
 UI Options
 ----------
@@ -508,10 +507,10 @@ incremental_skip_later
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Either ``yes`` or ``no``, controlling whether skipped directories are
-recorded in the incremental list. When set to ``yes``, skipped directories
-will be recorded, and skipped later. When set to ``no``, skipped
+recorded in the incremental list. When set to ``yes``, skipped
 directories won't be recorded, and beets will try to import them again
-later. Defaults to ``no``.
+later. When set to ``no``, skipped directories will be recorded, and
+skipped later. Defaults to ``no``.
 
 .. _from_scratch:
 
@@ -521,6 +520,17 @@ from_scratch
 Either ``yes`` or ``no`` (default), controlling whether existing metadata is
 discarded when a match is applied. This corresponds to the ``--from_scratch``
 flag to ``beet import``.
+
+.. _quiet:
+
+quiet
+~~~~~
+
+Either ``yes`` or ``no`` (default), controlling whether to ask for a manual
+decision from the user when the importer is unsure how to proceed. This
+corresponds to the ``--quiet`` flag to ``beet import``.
+
+.. _quiet_fallback:
 
 quiet_fallback
 ~~~~~~~~~~~~~~
@@ -677,8 +687,8 @@ to one request per second.
 
 .. _your own MusicBrainz database: https://musicbrainz.org/doc/MusicBrainz_Server/Setup
 .. _main server: https://musicbrainz.org/
-.. _limited: http://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
-.. _Building search indexes: https://musicbrainz.org/doc/MusicBrainz_Server/Setup#Building_search_indexes
+.. _limited: https://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
+.. _Building search indexes: https://musicbrainz.org/doc/Development/Search_server_setup
 
 .. _searchlimit:
 
@@ -689,6 +699,37 @@ The number of matches returned when sending search queries to the
 MusicBrainz server.
 
 Default: ``5``.
+
+.. _extra_tags:
+
+extra_tags
+~~~~~~~~~~
+
+By default, beets will use only the artist, album, and track count to query
+MusicBrainz. Additional tags to be queried can be supplied with the
+``extra_tags`` setting. For example::
+
+    musicbrainz:
+        extra_tags: [year, catalognum, country, media, label]
+
+This setting should improve the autotagger results if the metadata with the
+given tags match the metadata returned by MusicBrainz.
+
+Note that the only tags supported by this setting are the ones listed in the
+above example.
+
+Default: ``[]``
+
+.. _genres:
+
+genres
+~~~~~~
+
+Use MusicBrainz genre tags to populate the ``genre`` tag.  This will make it a
+semicolon-separated list of all the genres tagged for the release on
+MusicBrainz.
+
+Default: ``no``
 
 .. _match-config:
 
@@ -970,6 +1011,6 @@ Here's an example file::
     See Also
     --------
 
-    ``http://beets.readthedocs.org/``
+    ``https://beets.readthedocs.org/``
 
     :manpage:`beet(1)`
